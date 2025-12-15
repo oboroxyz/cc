@@ -1,0 +1,4 @@
+packages:
+  - 'miniapp'
+  - 'contracts'
+  - 'libs'
