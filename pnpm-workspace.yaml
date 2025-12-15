@@ -2,3 +2,4 @@ packages:
   - 'miniapp'
   - 'contracts'
   - 'libs'
+  - 'viewer'

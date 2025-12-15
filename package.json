@@ -5,11 +5,14 @@
   "main": "index.js",
   "scripts": {
     "@miniapp": "pnpm run --filter @hydra-nft/miniapp",
-    "@contracts": "pnpm run --filter @hydra-nft/contracts",
-    "@libs": "pnpm run --filter @hydra-nft/libs"
+    "@viewer": "pnpm run --filter @hydra-nft/viewer",
+    "@contracts": "pnpm run --filter @hydra-nft/contracts"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
-  "packageManager": "pnpm@10.25.0"
+  "packageManager": "pnpm@10.25.0",
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.8"
+  }
 }

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A hydra artwork</title>
+  <style>
+    body, html {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      overflow: hidden; background-color: #000;
+    }
+    #hydra-canvas {
+      width: 100%; height: 100%; display: block;
+    }
+    #error-log {
+      position: fixed; top: 10px; left: 10px;
+      color: red; background: rgba(0,0,0,0.7); padding: 10px;
+      display: none; pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="hydra-canvas"></canvas>
+  <div id="error-log"></div>
+
+  <script src="https://unpkg.com/hydra-synth"></script>
+
+  <script>
+    // 1. Initialize Hydra
+    const canvas = document.getElementById("hydra-canvas");
+    const errorLog = document.getElementById("error-log");
+
+    // Create Hydra instance with makeGlobal: true to support official Hydra code format
+    const h = new Hydra({
+      canvas: canvas,
+      detectAudio: false, // Set to true if needed
+      makeGlobal: true    // Important: allows using osc(), noise() etc. directly
+    }).synth;
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      h.setResolution(window.innerWidth, window.innerHeight);
+    });
+
+    // 2. Function to get code from URL parameters and execute it
+    function runCodeFromUrl() {
+        // Get the ?code=... part from the URL
+        // Note: URLSearchParams.get() automatically URL-decodes the value
+        const params = new URLSearchParams(window.location.search);
+        let codeString = params.get('code');
+
+        if (!codeString) {
+            console.log("No code found in URL parameters.");
+            // You can display a default visual
+            osc(5, 0.1, 0.5).color(0.5,0.5,0.5).out();
+            return;
+        }
+
+        try {
+            // Decode using official Hydra method:
+            // 1. Base64 decode with atob()
+            // 2. URI decode with decodeURIComponent()
+            // This matches: decodeURIComponent(atob(base64Code))
+            try {
+                const base64Decoded = atob(codeString);
+                const uriDecoded = decodeURIComponent(base64Decoded);
+                console.log("Successfully decoded Base64 + URI");
+                codeString = uriDecoded;
+            } catch (e) {
+                // If Base64 decode fails, try plain text
+                console.log("Not Base64 encoded, using plain text");
+            }
+        } catch (e) {
+            console.error("Decode error:", e);
+        }
+
+        console.log("Executing code:", codeString.substring(0, 100) + "...");
+
+        try {
+            // Clear error display
+            errorLog.style.display = 'none';
+
+            // Execute the code directly (works because makeGlobal: true)
+            eval(codeString);
+
+        } catch (e) {
+            console.error("Hydra Execution Error:", e);
+            // Display error on screen
+            errorLog.innerText = e.message;
+            errorLog.style.display = 'block';
+            solid(0.2, 0, 0).out(); // Turn red on error
+        }
+    }
+
+    // Start execution
+    runCodeFromUrl();
+  </script>
+</body>
+</html>
