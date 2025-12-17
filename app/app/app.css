@@ -1,0 +1,11 @@
+@import "tailwindcss" source(".");
+
+@theme {
+  --font-sans: "DM Mono", ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+html,
+body {
+  @apply text-white bg-gray-950;
+}

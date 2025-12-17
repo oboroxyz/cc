@@ -12,7 +12,7 @@ importers:
         specifier: ^2.3.8
         version: 2.3.8
 
-  miniapp:
+  app:
     dependencies:
       '@coinbase/onchainkit':
         specifier: ^1.1.2
@@ -7847,7 +7847,7 @@ snapshots:
 
   extension-port-stream@3.0.0:
     dependencies:
-      readable-stream: 3.6.2
+      readable-stream: 4.7.0
       webextension-polyfill: 0.10.0
     optional: true
 
