@@ -16,8 +16,8 @@ async function build() {
     const hydraSynthCode = await response.text();
 
     // 2. Read the HTML file
-    console.log("Reading src/index.html...");
-    const html = await readFile("src/index.html", "utf-8");
+    console.log("Reading src/hydra.html...");
+    const html = await readFile("src/hydra.html", "utf-8");
 
     // 3. Replace the script tag with inline code
     const htmlWithInlineScript = html.replace(
@@ -34,15 +34,15 @@ async function build() {
     const minifiedHtml = await minify(tempPath);
 
     // 6. Create dist directory and write output
-    console.log("Writing to dist/index.html...");
+    console.log("Writing to dist/hydra.html...");
     await mkdir("dist", { recursive: true });
-    await writeFile("dist/index.html", minifiedHtml, "utf-8");
+    await writeFile("dist/hydra.html", minifiedHtml, "utf-8");
 
     // 7. Clean up temp file
     await unlink(tempPath).catch(() => {});
 
     console.log("✅ Build completed successfully!");
-    console.log(`   Output: dist/index.html (${minifiedHtml.length} bytes)`);
+    console.log(`   Output: dist/hydra.html (${minifiedHtml.length} bytes)`);
   } catch (error) {
     console.error("❌ Build failed:", error);
     process.exit(1);

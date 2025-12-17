@@ -2,10 +2,10 @@
   "name": "@hydra-nft/viewer",
   "version": "1.0.0",
   "description": "hydra-nft viewer on ipfs",
-  "main": "src/index.html",
+  "main": "src/hydra.html",
   "scripts": {
-    "dev": "open-cli src/index.html",
-    "build": "node build.mjs"
+    "dev:hydra": "open-cli src/hydra.html",
+    "build:hydra": "node build.mjs"
   },
   "keywords": [],
   "license": "ISC",
