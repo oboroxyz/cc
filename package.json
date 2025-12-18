@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "@miniapp": "pnpm run --filter @hydra-nft/app",
+    "@app": "pnpm run --filter @hydra-nft/app",
     "@viewer": "pnpm run --filter @hydra-nft/viewer"
   },
   "keywords": [],
