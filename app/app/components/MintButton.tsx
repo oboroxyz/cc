@@ -1,6 +1,10 @@
 import { useCallback } from "react";
 
-export function MintButton() {
+export function MintButton({
+  children,
+}: {
+  children?: string | React.ReactNode;
+}) {
   const handleMint = useCallback(() => {
     alert(
       "Minting functionality is currently mocked. Integration with MiniKit coming soon!",
@@ -9,12 +13,8 @@ export function MintButton() {
   }, []);
 
   return (
-    <button
-      type="button"
-      onClick={handleMint}
-      className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
-    >
-      Mint NFT
+    <button type="button" onClick={handleMint} className="btn py-2 px-4">
+      {children ?? "Mint"}
     </button>
   );
 }

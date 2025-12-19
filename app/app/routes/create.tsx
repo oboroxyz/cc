@@ -1,42 +1,42 @@
 // Syntax highlighting imports
 import Prism from "prismjs";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import Editor from "react-simple-code-editor";
-import { HydraCanvas } from "../components/HydraCanvas";
-import { MintButton } from "../components/MintButton";
+import { ChatModal } from "~/components/ChatModal";
+import { HydraCanvas } from "~/components/HydraCanvas";
+import { MintButton } from "~/components/MintButton";
 import type { Route } from "./+types/create";
 import "prismjs/components/prism-javascript";
 import "prismjs/themes/prism-tomorrow.css"; // Similar to official editor vibe
 
 export function meta(_: Route.MetaArgs) {
   return [
-    { title: "Create - Hydra NFT" },
-    { name: "description", content: "Create and Mint your Hydra Visuals" },
+    { title: "Create | Creative Coding" },
+    { name: "description", content: "Create and Mint your hydra visuals" },
   ];
 }
 
-const DEFAULT_CODE = `osc(10, 0.1, 0.8).rotate(0, 0.1).out()`;
+const DEFAULT_CODE = `osc(5,-0.126,0.514).rotate().pixelate().out()`;
 
 export default function Create(_: Route.ComponentProps) {
   const [code, setCode] = useState(DEFAULT_CODE);
-  // Preview code is updated only when "Play" is clicked to avoid constant re-rendering
   const [previewCode, setPreviewCode] = useState(DEFAULT_CODE);
+  const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
 
-  // Load from local storage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem("hydra-draft");
-    if (saved) {
-      setCode(saved);
-      setPreviewCode(saved);
-    }
+  const handleApplyCode = useCallback((newCode: string) => {
+    setCode(newCode);
+    setPreviewCode(newCode);
+    setIsChatOpen(false);
   }, []);
-
-  const handlePlay = useCallback(() => {
-    setPreviewCode(code);
-  }, [code]);
 
   return (
     <div className="flex flex-col h-screen">
+      <ChatModal
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        onApplyCode={handleApplyCode}
+        currentCode={code}
+      />
       {/* Main Content: Overlay View */}
       <div className="flex-1 relative overflow-hidden">
         {/* Preview Pane - Full Background */}
@@ -44,8 +44,8 @@ export default function Create(_: Route.ComponentProps) {
           <HydraCanvas code={previewCode} className="w-full h-full" />
         </div>
         {/* Editor Pane - Overlay */}
-        <div className="absolute top-0 left-0 w-auto h-auto z-10 pointer-events-none min-w-2/3">
-          <div className="h-full overflow-auto bg-black/20 backdrop-blur-xs font-mono text-sm px-3 pt-1 pb-2 pointer-events-auto m-3">
+        <div className="absolute top-0 left-0 h-full w-full max-w-screen z-10 pointer-events-none">
+          <div className="h-auto overflow-auto bg-black/20 backdrop-blur-xs font-mono text-sm px-3 pt-1 pb-2 pointer-events-auto m-3">
             <Editor
               value={code}
               onValueChange={setCode}
@@ -59,18 +59,30 @@ export default function Create(_: Route.ComponentProps) {
                 minHeight: "100%",
                 color: "#f0f0f0",
                 textShadow: "0 1px 2px rgba(0,0,0,0.8)",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
               }}
-              className="min-h-full"
+              className="min-h-full max-w-full whitespace-pre-wrap"
               textareaClassName="focus:outline-none"
             />
           </div>
-          <div className="fixed bottom-0 right-0 flex gap-2 z-10">
-            <button onClick={handlePlay} className="btn h-8" type="button">
-              💬 Edit with chat
+          <div className="fixed bottom-2 right-2 flex items-center gap-1 z-10 pointer-events-auto bg-black border-white border">
+            <button
+              onClick={() => setIsChatOpen(true)}
+              className="flex items-center gap-2 btn w-auto px-3 py-1"
+              type="button"
+            >
+              💬 Ask with AI
             </button>
-            <button onClick={handlePlay} className="btn h-8" type="button">
-              💾 Mint
-            </button>
+            <MintButton>💾 Mint</MintButton>
+            <a
+              href="https://hydra.ojack.xyz/docs/"
+              className="flex items-center gap-2 btn w-auto px-3 py-1"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              📖
+            </a>
           </div>
         </div>
       </div>

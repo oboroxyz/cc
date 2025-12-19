@@ -7,6 +7,7 @@
     "cf-typegen": "wrangler types",
     "deploy": "$npm_execpath run build && wrangler deploy",
     "dev": "react-router dev",
+    "dev:remote": "$npm_execpath run build && wrangler dev",
     "postinstall": "$npm_execpath run cf-typegen",
     "preview": "$npm_execpath run build && vite preview",
     "typecheck": "$npm_execpath run cf-typegen && react-router typegen && tsc -b"
@@ -39,7 +40,7 @@
     "typescript": "^5.9.2",
     "vite": "^7.1.7",
     "vite-tsconfig-paths": "^5.1.4",
-    "wrangler": "^4.54.0"
+    "wrangler": "^4.56.0"
   },
   "packageManager": "pnpm@10.25.0+sha512.5e82639027af37cf832061bcc6d639c219634488e0f2baebe785028a793de7b525ffcd3f7ff574f5e9860654e098fe852ba8ac5dd5cefe1767d23a020a92f501"
 }
