@@ -1,27 +1,76 @@
 import { OnchainKitProvider } from "@coinbase/onchainkit";
-import type { ReactNode } from "react";
-import { base } from "wagmi/chains";
-import "@coinbase/onchainkit/styles.css";
+import { SafeArea } from "@coinbase/onchainkit/minikit";
+import { sdk } from "@farcaster/miniapp-sdk";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { createConfig, http, WagmiProvider } from "wagmi";
+import { base, baseSepolia } from "wagmi/chains";
+import { coinbaseWallet } from "wagmi/connectors";
 
-export function RootProvider({ children }: { children: ReactNode }) {
+interface RootProviderProps {
+  children: ReactNode;
+  apiKey?: string;
+}
+
+function RootApp({ children }: { children: ReactNode }) {
+  useEffect(() => {
+    sdk.actions.ready();
+  }, []);
+
+  return <SafeArea>{children}</SafeArea>;
+}
+
+export default function RootProvider({ children, apiKey }: RootProviderProps) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  const wagmiConfig = useMemo(
+    () =>
+      createConfig({
+        chains: [baseSepolia],
+        connectors: [
+          coinbaseWallet({
+            appName: "Hydra NFT",
+          }),
+        ],
+        transports: {
+          [baseSepolia.id]: http(),
+        },
+      }),
+    [],
+  );
+
+  const queryClient = useMemo(() => new QueryClient(), []);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return <>{children}</>;
+  }
+
   return (
-    <OnchainKitProvider
-      apiKey={process.env.VITE_ONCHAINKIT_API_KEY}
-      chain={base}
-      config={{
-        appearance: {
-          mode: "auto",
-        },
-        wallet: {
-          display: "modal",
-        },
-      }}
-      miniKit={{
-        enabled: true,
-        autoConnect: true,
-      }}
-    >
-      {children}
-    </OnchainKitProvider>
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <OnchainKitProvider
+          apiKey={apiKey}
+          chain={baseSepolia}
+          config={{
+            appearance: {
+              mode: "auto",
+            },
+            wallet: {
+              display: "modal",
+            },
+          }}
+          miniKit={{
+            enabled: true,
+            autoConnect: true,
+          }}
+        >
+          <RootApp>{children}</RootApp>
+        </OnchainKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }

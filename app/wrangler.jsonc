@@ -11,6 +11,10 @@
   "observability": {
     "enabled": true
   },
+  "vars": {
+    "ONCHAINKIT_API_KEY": "7GJUCPt9TwGbAW7y5gEiw8m1fCFKmdEL",
+    "HYDRA_VIEWER_CID": "bafkreiat3znewbxc7kweajzeta4kjizwkeeiscckygtwgq2qnkhtuofjnq"
+  },
   "placement": { "mode": "smart" },
   "ai": {
     "binding": "AI"

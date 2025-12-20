@@ -3,6 +3,7 @@ import Prism from "prismjs";
 import { useCallback, useState } from "react";
 import Editor from "react-simple-code-editor";
 import { ChatModal } from "~/components/ChatModal";
+import { ClientOnly } from "~/components/ClientOnly";
 import { HydraCanvas } from "~/components/HydraCanvas";
 import { MintButton } from "~/components/MintButton";
 import type { Route } from "./+types/create";
@@ -18,9 +19,29 @@ export function meta(_: Route.MetaArgs) {
 
 const DEFAULT_CODE = `osc(5,-0.126,0.514).rotate().pixelate().out()`;
 
-export default function Create(_: Route.ComponentProps) {
-  const [code, setCode] = useState(DEFAULT_CODE);
-  const [previewCode, setPreviewCode] = useState(DEFAULT_CODE);
+export async function loader({ request, context }: Route.LoaderArgs) {
+  const url = new URL(request.url);
+  const codeParam = url.searchParams.get("code");
+
+  let initialCode = null;
+  if (codeParam) {
+    try {
+      initialCode = decodeURIComponent(atob(codeParam));
+    } catch {
+      // Invalid base64, ignore
+    }
+  }
+
+  return {
+    initialCode,
+    viewerCid: context.cloudflare.env.HYDRA_VIEWER_CID,
+  };
+}
+
+export default function Create({ loaderData }: Route.ComponentProps) {
+  const initialCode = loaderData.initialCode ?? DEFAULT_CODE;
+  const [code, setCode] = useState(initialCode);
+  const [previewCode, setPreviewCode] = useState(initialCode);
   const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
 
   const handleApplyCode = useCallback((newCode: string) => {
@@ -74,7 +95,11 @@ export default function Create(_: Route.ComponentProps) {
             >
               💬 Ask with AI
             </button>
-            <MintButton>💾 Mint</MintButton>
+            <ClientOnly>
+              <MintButton code={code} viewerCid={loaderData.viewerCid}>
+                💾 Mint
+              </MintButton>
+            </ClientOnly>
             <a
               href="https://hydra.ojack.xyz/docs/"
               className="flex items-center gap-2 btn w-auto px-3 py-1"

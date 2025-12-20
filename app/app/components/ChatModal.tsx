@@ -78,9 +78,7 @@ export function ChatModal({
             className="flex-1 h-10 flex items-center justify-center transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
-              <>
-                <span className="animate-spin">↻</span> Generating...
-              </>
+              <span className="animate-spin text-xl">↻</span>
             ) : (
               "⌲ Apply"
             )}

@@ -6,9 +6,17 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
-
+import RootProvider from "~/components/RootProvider";
 import type { Route } from "./+types/root";
-import "./app.css";
+import "~/app.css";
+
+export async function loader({ context }: Route.LoaderArgs) {
+  return {
+    ENV: {
+      ONCHAINKIT_API_KEY: context.cloudflare.env.ONCHAINKIT_API_KEY,
+    },
+  };
+}
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -42,8 +50,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function App() {
-  return <Outlet />;
+export default function App({ loaderData }: Route.ComponentProps) {
+  return (
+    <RootProvider apiKey={loaderData.ENV.ONCHAINKIT_API_KEY}>
+      <Outlet />
+    </RootProvider>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
