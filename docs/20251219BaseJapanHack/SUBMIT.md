@@ -10,7 +10,7 @@
 ## Demo
 
 - **URL**: https://cc.0x7.sh
-- **Slides**: _TBA_
+- **Slides**: [google slides](https://docs.google.com/presentation/d/1Zl6uGibbwpp-xCftnFN8bj_i1ZvG4GeT3SnJSwTYHEM/edit?usp=sharing)
 - **Demo**: _TBA_
 
 ## Push Points
