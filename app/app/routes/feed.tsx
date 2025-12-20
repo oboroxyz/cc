@@ -1,37 +1,138 @@
-import { HydraCanvas } from "../components/HydraCanvas";
+import { createPublicClient, http } from "viem";
+import { HydraCanvas } from "~/components/HydraCanvas";
+import {
+  CONTRACT_ABI,
+  CONTRACT_ADDRESS,
+  CONTRACT_CHAIN,
+} from "~/lib/contract";
 import type { Route } from "./+types/feed";
+
+interface NFTItem {
+  id: number;
+  name?: string;
+  code: string;
+  owner: string;
+}
 
 export function meta(_: Route.MetaArgs) {
   return [
-    { title: "hydra NFT" },
-    { name: "description", content: "hydra! hydra! hydra!" },
+    { title: "Feed | Hydra NFT" },
+    { name: "description", content: "Explore Hydra generative art NFTs" },
   ];
 }
 
-export default function Home(_: Route.ComponentProps) {
+export async function loader(_: Route.LoaderArgs) {
+  const client = createPublicClient({
+    chain: CONTRACT_CHAIN,
+    transport: http(),
+  });
+
+  try {
+    const totalSupply = await client.readContract({
+      address: CONTRACT_ADDRESS,
+      abi: CONTRACT_ABI,
+      functionName: "totalSupply",
+    });
+
+    const nfts: NFTItem[] = [];
+
+    // Fetch each NFT (newest first)
+    for (let i = Number(totalSupply); i >= 1; i--) {
+      try {
+        const [tokenURI, owner] = await Promise.all([
+          client.readContract({
+            address: CONTRACT_ADDRESS,
+            abi: CONTRACT_ABI,
+            functionName: "tokenURI",
+            args: [BigInt(i)],
+          }),
+          client.readContract({
+            address: CONTRACT_ADDRESS,
+            abi: CONTRACT_ABI,
+            functionName: "ownerOf",
+            args: [BigInt(i)],
+          }),
+        ]);
+
+        // Parse metadata
+        let metadata: { animation_url?: string; name?: string };
+        if (tokenURI.startsWith("data:application/json")) {
+          const base64Data = tokenURI.replace(
+            "data:application/json;base64,",
+            ""
+          );
+          metadata = JSON.parse(atob(base64Data));
+        } else {
+          continue;
+        }
+
+        if (!metadata.animation_url) continue;
+
+        // Extract code from animation_url
+        const animationUrl = new URL(
+          metadata.animation_url.replace("ipfs://", "https://ipfs.io/ipfs/")
+        );
+        const codeParam = animationUrl.searchParams.get("code");
+        if (!codeParam) continue;
+
+        const code = decodeURIComponent(atob(codeParam));
+
+        nfts.push({
+          id: i,
+          name: metadata.name,
+          code,
+          owner: owner as string,
+        });
+      } catch {
+        // Skip invalid tokens
+      }
+    }
+
+    return { nfts };
+  } catch (error) {
+    console.error("Failed to fetch NFTs:", error);
+    return { nfts: [] };
+  }
+}
+
+export default function Feed({ loaderData }: Route.ComponentProps) {
+  const { nfts } = loaderData;
+
   return (
-    <div className="container max-w-screen-sm mx-auto">
-      <h1 className="text-3xl text-center py-12">Feed</h1>
-      <div>
-        <HydraCanvas
-          className="w-full aspect-square"
-          code="JTJGJTJGJTIwbGljZW5zZWQlMjB3aXRoJTIwQ0MlMjBCWS1OQy1TQSUyMDQuMCUyMGh0dHBzJTNBJTJGJTJGY3JlYXRpdmVjb21tb25zLm9yZyUyRmxpY2Vuc2VzJTJGYnktbmMtc2ElMkY0LjAlMkYlMEElMkYlMkYlMjBHYWxheHklMjBUcmlwJTBBJTJGJTJGJTIwYnklMjBSYW5nZ2ElMjBQdXJuYW1hJTIwQWppJTBBJTJGJTJGJTIwaHR0cHMlM0ElMkYlMkZyYW5nZ2FwdXJuYW1hYWppMS53aXhzaXRlLmNvbSUyRnBvcnRmb2xpbyUwQXNoYXBlKDElMkMlMjAxKSUwQSUwOS5tdWx0KHZvcm9ub2koMTAwMCUyQyUyMDIpJTBBJTA5JTA5LmJsZW5kKG8wKSUwQSUwOSUwOS5sdW1hKCkpJTBBJTA5LmFkZChzaGFwZSgzJTJDJTIwMC4xMjUpJTBBJTA5JTA5LnJvdGF0ZSgxJTJDJTIwMSklMEElMDklMDkubXVsdCh2b3Jvbm9pKDEwMDAlMkMlMjAxKSUwQSUwOSUwOSUwOS5sdW1hKCkpJTBBJTA5JTA5LnJvdGF0ZSgxLjUpKSUwQSUwOS5zY3JvbGxYKCU1QjAuMSUyQyUyMC0wLjA2MjUlMkMlMjAwLjAwMyUyQyUyMDAuMDAwMDElNUQlMkMlMjAwKSUwQSUwOS5zY3JvbGxZKCU1QjAuMSUyQyUyMC0wLjA2MjUlMkMlMjAwLjAwNSUyQyUyMDAuMDAwMDElNUQlMkMlMjAwKSUwQSUwOS5vdXQoKSUzQg%3D%3D"
-        />
-        <div>
-          Author: aaaaa
-          <button>Like</button>
-          <button>Comment</button>
-          <button>Share</button>
+    <div className="container max-w-screen-sm mx-auto px-4 py-8">
+      <h1 className="text-3xl text-center py-8">Feed</h1>
+
+      {nfts.length === 0 ? (
+        <div className="text-center text-gray-400 py-12">
+          No NFTs minted yet.{" "}
+          <a href="/create" className="underline">
+            Create one!
+          </a>
         </div>
-      </div>
-      <HydraCanvas
-        className="w-full aspect-square"
-        code="JTJGJTJGJTIwbGljZW5zZWQlMjB3aXRoJTIwQ0MlMjBCWS1OQy1TQSUyMDQuMCUyMGh0dHBzJTNBJTJGJTJGY3JlYXRpdmVjb21tb25zLm9yZyUyRmxpY2Vuc2VzJTJGYnktbmMtc2ElMkY0LjAlMkYlMEElMkYlMkYlMjBDZWxsdWxhciUyMCUyNiUyMEJsb2J1bGFyJTBBJTJGJTJGJTIwYnklMjBNYWhhbGlhJTIwSC1SJTBBJTJGJTJGJTIwSUclM0ElMjBtbV9ocl8lMEFzcGVlZCUyMCUzRCUyMDAuMyUzQiUwQXNoYXBlKDIwJTJDJTIwMC4yJTJDJTIwMC4zKSUwQSUwOS5jb2xvcigwLjUlMkMlMjAwLjglMkMlMjA1MCklMEElMDkuc2NhbGUoKCklMjAlM0QlM0UlMjBNYXRoLnNpbih0aW1lKSUyMCUyQiUyMDElMjAqJTIwMiklMEElMDkucmVwZWF0KCgpJTIwJTNEJTNFJTIwTWF0aC5zaW4odGltZSklMjAqJTIwMTApJTBBJTA5Lm1vZHVsYXRlUm90YXRlKG8wKSUwQSUwOS5zY2FsZSgoKSUyMCUzRCUzRSUyME1hdGguc2luKHRpbWUpJTIwJTJCJTIwMSUyMColMjAxLjUpJTBBJTA5Lm1vZHVsYXRlKG5vaXNlKDIlMkMlMjAyKSklMEElMDkucm90YXRlKDEuMzc0JTJDJTIwLjIpJTBBJTA5Lm91dChvMCklM0IlMEElMkYlMkYlMjAuaW52ZXJ0KDIuNCk%3D"
-      />
-      <HydraCanvas
-        className="w-full aspect-square"
-        code="JTJGJTJGJTIwbGljZW5zZWQlMjB3aXRoJTIwQ0MlMjBCWS1OQy1TQSUyMDQuMCUyMGh0dHBzJTNBJTJGJTJGY3JlYXRpdmVjb21tb25zLm9yZyUyRmxpY2Vuc2VzJTJGYnktbmMtc2ElMkY0LjAlMkYlMEElMkYlMkYlMjBHYWxheHklMjBUcmlwJTBBJTJGJTJGJTIwYnklMjBSYW5nZ2ElMjBQdXJuYW1hJTIwQWppJTBBJTJGJTJGJTIwaHR0cHMlM0ElMkYlMkZyYW5nZ2FwdXJuYW1hYWppMS53aXhzaXRlLmNvbSUyRnBvcnRmb2xpbyUwQXNoYXBlKDElMkMlMjAxKSUwQSUwOS5tdWx0KHZvcm9ub2koMTAwMCUyQyUyMDIpJTBBJTA5JTA5LmJsZW5kKG8wKSUwQSUwOSUwOS5sdW1hKCkpJTBBJTA5LmFkZChzaGFwZSgzJTJDJTIwMC4xMjUpJTBBJTA5JTA5LnJvdGF0ZSgxJTJDJTIwMSklMEElMDklMDkubXVsdCh2b3Jvbm9pKDEwMDAlMkMlMjAxKSUwQSUwOSUwOSUwOS5sdW1hKCkpJTBBJTA5JTA5LnJvdGF0ZSgxLjUpKSUwQSUwOS5zY3JvbGxYKCU1QjAuMSUyQyUyMC0wLjA2MjUlMkMlMjAwLjAwMyUyQyUyMDAuMDAwMDElNUQlMkMlMjAwKSUwQSUwOS5zY3JvbGxZKCU1QjAuMSUyQyUyMC0wLjA2MjUlMkMlMjAwLjAwNSUyQyUyMDAuMDAwMDElNUQlMkMlMjAwKSUwQSUwOS5vdXQoKSUzQg%3D%3D"
-      />
+      ) : (
+        <div className="flex flex-col gap-6">
+          {nfts.map((nft) => (
+            <a
+              key={nft.id}
+              href={`/a/${nft.id}`}
+              className="block bg-black/50 border border-white/20 hover:border-white/50 transition-colors"
+            >
+              <HydraCanvas code={nft.code} className="w-full aspect-square" />
+              <div className="p-3 flex justify-between items-center">
+                <div>
+                  <span className="text-white/60">#{nft.id}</span>
+                  {nft.name && (
+                    <span className="ml-2 text-white">{nft.name}</span>
+                  )}
+                </div>
+                <span className="text-white/40 text-sm font-mono">
+                  {nft.owner.slice(0, 6)}...{nft.owner.slice(-4)}
+                </span>
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
