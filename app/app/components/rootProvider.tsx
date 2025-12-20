@@ -29,7 +29,10 @@ export default function RootProvider({ children, apiKey }: RootProviderProps) {
         chains: [baseSepolia],
         connectors: [
           coinbaseWallet({
-            appName: "Hydra NFT",
+            appName: "Creative Coding NFT",
+            preference: {
+              options: "smartWalletOnly",
+            },
           }),
         ],
         transports: {

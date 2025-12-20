@@ -1,14 +1,5 @@
-import {
-  Transaction,
-  TransactionButton,
-  TransactionStatus,
-  TransactionStatusAction,
-  TransactionStatusLabel,
-} from "@coinbase/onchainkit/transaction";
-import { ConnectWallet, Wallet } from "@coinbase/onchainkit/wallet";
 import type { ReactNode } from "react";
-import { encodeFunctionData } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useConnect, useWriteContract } from "wagmi";
 import { CONTRACT_ABI, CONTRACT_ADDRESS } from "~/lib/contract";
 
 interface NFTMetadata {
@@ -42,6 +33,13 @@ export function MintButton({
   onSuccess,
 }: MintButtonProps) {
   const { address, isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
+  const {
+    writeContract,
+    isPending,
+    isSuccess,
+    data: txHash,
+  } = useWriteContract();
 
   const encodedCode = btoa(encodeURIComponent(code));
   const animationUrl = `ipfs://${viewerCid}?code=${encodedCode}`;
@@ -63,44 +61,48 @@ export function MintButton({
 
   const uri = `data:application/json;base64,${btoa(JSON.stringify(nftMetadata))}`;
 
-  if (!isConnected || !address) {
-    return (
-      <Wallet>
-        <ConnectWallet className="btn py-2 px-4">
-          <span>Connect</span>
-        </ConnectWallet>
-      </Wallet>
-    );
-  }
+  const handleMint = () => {
+    if (!address) return;
 
-  const calls = [
-    {
-      to: CONTRACT_ADDRESS as `0x${string}`,
-      data: encodeFunctionData({
+    writeContract(
+      {
+        address: CONTRACT_ADDRESS,
         abi: CONTRACT_ABI,
         functionName: "mint",
         args: [address, uri, isSbt],
-      }),
-    },
-  ];
+      },
+      {
+        onSuccess: (hash) => {
+          onSuccess?.(hash);
+        },
+      },
+    );
+  };
+
+  if (!isConnected || !address) {
+    return (
+      <button
+        type="button"
+        className="btn py-2 px-4"
+        onClick={() => connect({ connector: connectors[0] })}
+      >
+        Connect to Mint
+      </button>
+    );
+  }
+
+  if (isSuccess && txHash) {
+    return <span className="btn py-2 px-4 text-green-400">Minted!</span>;
+  }
 
   return (
-    <Transaction
-      calls={calls}
-      onSuccess={(response) => {
-        if (onSuccess && response.transactionReceipts?.[0]?.transactionHash) {
-          onSuccess(response.transactionReceipts[0].transactionHash);
-        }
-      }}
+    <button
+      type="button"
+      className="btn py-2 px-4"
+      onClick={handleMint}
+      disabled={isPending}
     >
-      <TransactionButton
-        text={String(children ?? "Mint")}
-        className="btn py-2 px-4"
-      />
-      <TransactionStatus>
-        <TransactionStatusLabel />
-        <TransactionStatusAction />
-      </TransactionStatus>
-    </Transaction>
+      {isPending ? "Minting..." : (children ?? "Mint")}
+    </button>
   );
 }
