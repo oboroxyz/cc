@@ -8,6 +8,13 @@
 html,
 body {
   @apply text-white bg-black font-mono;
+  overflow: hidden;
+  height: 100%;
+}
+
+/* Hide extra canvas elements created by Hydra outside of our components */
+body > canvas {
+  display: none !important;
 }
 
 h1,
